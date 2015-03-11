@@ -1,0 +1,78 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class WebServer {
+  protected void start(){
+    ServerSocket s;
+    BufferedReader br;
+    String file="";
+    String line;
+    String tokens[];
+    try {
+      // create the main server socket, listens on given port.
+      s = new ServerSocket(5550);
+    } catch (Exception e) {
+      System.out.println("Error: " + e);
+      return;
+    }
+
+    System.out.println("Webserver starting up on port: "+s.getLocalPort());
+    System.out.println("Waiting for connections:");
+    while(true) {
+      try {
+        Socket sock = s.accept(); //wait for a connection
+        System.out.println("Connection, sending data.");
+        BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+        PrintWriter out = new PrintWriter(sock.getOutputStream());
+        String str = ".";
+        while (!str.equals("")){
+        	str = in.readLine();
+        	if(str.contains("GET")){
+        		tokens=str.split(" ");
+        		file=tokens[1].replace("/", "");
+        	}
+        }
+        try{
+        	if(file.equals("")){
+        		out.println("HTTP/1.0 200 OK");
+                out.println("Content-Type: text/html");
+                out.println("Server: server:)");
+                out.println("");// this blank line indicates that the end of header has been reached.
+                out.println("<H1>Welcome to WebServer!!</H2>");
+        	}
+        	else{
+        		br= new BufferedReader(new FileReader(file));
+        		out.println("HTTP/1.0 200 OK");
+                out.println("Content-Type: text/html");
+                out.println("Server: server:)");
+                out.println("");
+        		out.println("The requested file has been sent. The content is:");
+        		while ((line = br.readLine()) != null) {
+    				out.println(line);
+    			}
+        	}
+    	}catch(FileNotFoundException e){
+    		out.println("HTTP/1.1 404 Not found");
+    		out.println("Content-type: text/html");
+    		out.println("Server-name: server:)");
+    		out.println("");// this blank line indicates that the end of header has been reached.
+    		out.println("Your file has not been found.");
+    	}
+        out.flush();
+        sock.close();
+      } catch (Exception e) {
+        System.out.println("Error: " + e);
+      }
+    }
+  }
+  public static void main(String args[]){
+    WebServer ws = new WebServer();
+    ws.start();
+  }
+}
